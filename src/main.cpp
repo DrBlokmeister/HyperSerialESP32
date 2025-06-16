@@ -27,6 +27,7 @@
 
 #include <Arduino.h>
 #include <NeoPixelBus.h>
+#include "statusled.h"
 
 #if !defined(ARDUINO_LOLIN_S2_MINI) && ESP_ARDUINO_VERSION_MAJOR == 2 && ESP_ARDUINO_VERSION_MINOR ==0 && ESP_ARDUINO_VERSION_PATCH <= 5
     #error "Arduino ESP32 versions 2.0.0-2.0.5 are unsupported."
@@ -204,8 +205,12 @@ void setup()
 	// Init serial port
 	Serial.setRxBufferSize(MAX_BUFFER - 1);
 	Serial.setTimeout(50);
-	Serial.begin(SERIALCOM_SPEED);
-	while (!Serial) continue;
+        Serial.begin(SERIALCOM_SPEED);
+        while (!Serial) continue;
+
+#if defined(STATUS_LED_PIN)
+        statusLed.init();
+#endif
 
 	#if defined(NEOPIXEL_RGBW) || defined(NEOPIXEL_RGB)
 		#ifdef NEOPIXEL_RGBW

@@ -35,6 +35,7 @@
 #include "statistics.h"
 #include "base.h"
 #include "framestate.h"
+#include "statusled.h"
 
 /**
  * @brief separete thread on core 1 for handling serial communication using cyclic buffer
@@ -62,10 +63,14 @@ bool serialTaskHandler()
 	}
 
 #if defined(LED_POWER_PIN)
-	powerControl.update(incomingSize > 0);
+        powerControl.update(incomingSize > 0);
 #endif
 
-	return (incomingSize > 0);
+#if defined(STATUS_LED_PIN)
+        statusLed.update(false);
+#endif
+
+        return (incomingSize > 0);
 }
 
 void updateMainStatistics(unsigned long currentTime, unsigned long deltaTime, bool hasData)
@@ -270,7 +275,10 @@ void processData()
 			{
 				statistics.increaseGood();
 
-				base.renderLeds(true);
+                                base.renderLeds(true);
+#if defined(STATUS_LED_PIN)
+                                statusLed.update(true);
+#endif
 
 				#ifdef NEOPIXEL_RGBW
 					// if received the calibration data, update it now
