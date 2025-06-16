@@ -12,10 +12,11 @@ class
         const uint8_t RESOLUTION = 8;
         const unsigned long BLINK_TIME = 100;     // ms
         const unsigned long BLINK_GAP = 100;      // limit to 10 Hz
-        const unsigned long BREATH_STEP = 20;     // ms per brightness step
+        const unsigned long BREATH_STEP = 4;      // ms per brightness step (~2 s cycle)
 
-        unsigned long activeUntil = 0;
+        unsigned long blinkUntil = 0;
         unsigned long lastBlink = 0;
+        uint8_t blinkState = 0;  // 0: idle, 1: on, 2: off
         unsigned long lastBreath = 0;
         int8_t breatheDir = 1;
         uint8_t breatheValue = 0;
@@ -33,24 +34,39 @@ class
                 {
                         unsigned long now = millis();
 
-                        if (hasActivity && (now - lastBlink >= BLINK_GAP))
+                        if (hasActivity && blinkState == 0 && (now - lastBlink >= BLINK_GAP))
                         {
                                 lastBlink = now;
-                                activeUntil = now + BLINK_TIME;
+                                blinkState = 1;
+                                blinkUntil = now + BLINK_TIME;
                         }
 
-                        if (now < activeUntil)
+                        if (blinkState == 1)
                         {
+                                if (now >= blinkUntil)
+                                {
+                                        blinkState = 2;
+                                        blinkUntil = now + BLINK_TIME;
+                                }
                                 ledcWrite(CHANNEL, 255);
+                                return;
                         }
-                        else if (now - lastBreath >= BREATH_STEP)
+                        else if (blinkState == 2)
+                        {
+                                if (now >= blinkUntil)
+                                        blinkState = 0;
+                                ledcWrite(CHANNEL, 0);
+                                return;
+                        }
+
+                        if (now - lastBreath >= BREATH_STEP)
                         {
                                 lastBreath = now;
                                 breatheValue += breatheDir;
                                 if (breatheValue == 0 || breatheValue == 255)
                                         breatheDir = -breatheDir;
-                                ledcWrite(CHANNEL, breatheValue);
                         }
+                        ledcWrite(CHANNEL, breatheValue);
                 }
 } statusLed;
 
