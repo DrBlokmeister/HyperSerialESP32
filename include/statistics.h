@@ -31,13 +31,15 @@
 // statistics (stats sent only when there is no communication)
 class
 {
-	unsigned long startTime = 0;
-	uint16_t goodFrames = 0;
-	uint16_t showFrames = 0;
-	uint16_t totalFrames = 0;
-	uint16_t finalGoodFrames = 0;
-	uint16_t finalShowFrames = 0;
-	uint16_t finalTotalFrames = 0;
+        unsigned long startTime = 0;
+        uint16_t goodFrames = 0;
+        uint16_t showFrames = 0;
+        uint16_t totalFrames = 0;
+        uint16_t invalidFrames = 0;
+        uint16_t finalGoodFrames = 0;
+        uint16_t finalShowFrames = 0;
+        uint16_t finalTotalFrames = 0;
+        uint16_t finalInvalidFrames = 0;
 
 	public:
 		/**
@@ -72,20 +74,30 @@ class
 		 * @brief The frame is received correctly (not yet displayed)
 		 *
 		 */
-		inline void increaseGood()
-		{
-			goodFrames++;
-		}
+                inline void increaseGood()
+                {
+                        goodFrames++;
+                }
+
+                inline void increaseInvalid()
+                {
+                        invalidFrames++;
+                }
 
 		/**
 		 * @brief Get number of correctly received frames
 		 *
 		 * @return uint16_t
 		 */
-		inline uint16_t getGoodFrames()
-		{
-			return goodFrames;
-		}
+                inline uint16_t getGoodFrames()
+                {
+                        return goodFrames;
+                }
+
+                inline uint16_t getInvalidFrames()
+                {
+                        return invalidFrames;
+                }
 
 		/**
 		 * @brief Period restart, save current statistics ans send them later if there is no incoming communication
@@ -94,18 +106,20 @@ class
 		 */
 		void update(unsigned long currentTime)
 		{
-			if (totalFrames > 0)
-			{
-				finalShowFrames = showFrames;
-				finalGoodFrames = std::min(goodFrames, totalFrames);
-				finalTotalFrames = totalFrames;
-			}
+                        if (totalFrames > 0)
+                        {
+                                finalShowFrames = showFrames;
+                                finalGoodFrames = std::min(goodFrames, totalFrames);
+                                finalTotalFrames = totalFrames;
+                                finalInvalidFrames = invalidFrames;
+                        }
 
 			startTime = currentTime;
 			goodFrames = 0;
 			totalFrames = 0;
-			showFrames = 0;
-		}
+                        showFrames = 0;
+                        invalidFrames = 0;
+                }
 
 		/**
 		 * @brief Print last saved statistics to the serial port
@@ -122,11 +136,11 @@ class
 			totalFrames = 0;
 			showFrames = 0;
 
-			snprintf(output, sizeof(output), "HyperHDR frames: %u (FPS), receiv.: %u, good: %u, incompl.: %u, mem1: %i, mem2: %i, heap: %i\r\n",
-						finalShowFrames, finalTotalFrames,finalGoodFrames,(finalTotalFrames - finalGoodFrames),
-						(taskHandle1 != nullptr) ? uxTaskGetStackHighWaterMark(taskHandle1) : 0,
-						(taskHandle2 != nullptr) ? uxTaskGetStackHighWaterMark(taskHandle2) : 0,
-						ESP.getFreeHeap());
+                        snprintf(output, sizeof(output), "HyperHDR frames: %u (FPS), receiv.: %u, good: %u, invalid: %u, incompl.: %u, mem1: %i, mem2: %i, heap: %i\r\n",
+                                                finalShowFrames, finalTotalFrames,finalGoodFrames, finalInvalidFrames,(finalTotalFrames - finalGoodFrames),
+                                                (taskHandle1 != nullptr) ? uxTaskGetStackHighWaterMark(taskHandle1) : 0,
+                                                (taskHandle2 != nullptr) ? uxTaskGetStackHighWaterMark(taskHandle2) : 0,
+                                                ESP.getFreeHeap());
 			SerialPort.print(output);
 
 			#if defined(NEOPIXEL_RGBW)
@@ -142,24 +156,27 @@ class
 		{
 			startTime = currentTime;
 
-			finalShowFrames = 0;
-			finalGoodFrames = 0;
-			finalTotalFrames = 0;
+                        finalShowFrames = 0;
+                        finalGoodFrames = 0;
+                        finalTotalFrames = 0;
+                        finalInvalidFrames = 0;
 
 			goodFrames = 0;
 			totalFrames = 0;
-			showFrames = 0;
-		}
+                        showFrames = 0;
+                        invalidFrames = 0;
+                }
 
-		void lightReset(unsigned long curTime, bool hasData)
-		{
-			if (hasData)
+                void lightReset(unsigned long curTime, bool hasData)
+                {
+                        if (hasData)
 				startTime = curTime;
 
 			goodFrames = 0;
 			totalFrames = 0;
-			showFrames = 0;
-		}
+                        showFrames = 0;
+                        invalidFrames = 0;
+                }
 
 } statistics;
 
