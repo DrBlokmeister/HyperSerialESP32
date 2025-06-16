@@ -212,6 +212,8 @@ void setup()
         statusLed.init();
 #endif
 
+        lastGoodFrameTime = millis();
+
 	#if defined(NEOPIXEL_RGBW) || defined(NEOPIXEL_RGB)
 		#ifdef NEOPIXEL_RGBW
 			#ifdef COLD_WHITE

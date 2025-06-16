@@ -37,6 +37,8 @@
 #include "framestate.h"
 #include "statusled.h"
 
+static unsigned long lastGoodFrameTime = 0;
+
 /**
  * @brief separete thread on core 1 for handling serial communication using cyclic buffer
  *
@@ -91,7 +93,12 @@ void processData()
 	unsigned long currentTime = millis();
 	unsigned long deltaTime = currentTime - statistics.getStartTime();
 
-	updateMainStatistics(currentTime, deltaTime, base.queueCurrent != base.queueEnd);
+       updateMainStatistics(currentTime, deltaTime, base.queueCurrent != base.queueEnd);
+
+#if defined(STATUS_LED_PIN)
+        if (base.queueCurrent != base.queueEnd && (currentTime - lastGoodFrameTime) > 2000)
+                statusLed.error();
+#endif
 
 	if (statistics.getStartTime() + 5000 < millis())
 	{
@@ -161,19 +168,25 @@ void processData()
 				uint16_t ledSize = frameState.getCount() + 1;
 
 				// sanity check
-				if (ledSize > 4096)
-					frameState.setState(AwaProtocol::HEADER_A);
-				else
-				{
-					if (ledSize != base.getLedsNumber())
-						base.initLedStrip(ledSize);
+                                if (ledSize > 4096)
+                                {
+                                        statistics.increaseInvalid();
+#if defined(STATUS_LED_PIN)
+                                        statusLed.error();
+#endif
+                                        frameState.setState(AwaProtocol::HEADER_A);
+                                }
+                                else
+                                {
+                                        if (ledSize != base.getLedsNumber())
+                                                base.initLedStrip(ledSize);
 
 					frameState.setState(AwaProtocol::RED);
 				}
 			}
-			else if (frameState.getCount() ==  0x2aa2 && (input == 0x15 || input == 0x35))
-			{
-				statistics.print(currentTime, base.processDataHandle, base.processSerialHandle);
+                        else if (frameState.getCount() ==  0x2aa2 && (input == 0x15 || input == 0x35))
+                        {
+                                statistics.print(currentTime, base.processDataHandle, base.processSerialHandle);
 
 				if (input == 0x15)
 					SerialPort.println(HELLO_MESSAGE);
@@ -181,11 +194,17 @@ void processData()
 
 				currentTime = millis();
 				statistics.reset(currentTime);
-				frameState.setState(AwaProtocol::HEADER_A);
-			}
-			else
-				frameState.setState(AwaProtocol::HEADER_A);
-			break;
+                                frameState.setState(AwaProtocol::HEADER_A);
+                        }
+                        else
+                        {
+                                statistics.increaseInvalid();
+#if defined(STATUS_LED_PIN)
+                                statusLed.error();
+#endif
+                                frameState.setState(AwaProtocol::HEADER_A);
+                        }
+                        break;
 
 		case AwaProtocol::RED:
 			frameState.color.R = input;
@@ -253,27 +272,41 @@ void processData()
 			frameState.setState(AwaProtocol::FLETCHER1);
 			break;
 
-		case AwaProtocol::FLETCHER1:
-			// initial frame data integrity check
-			if (input != frameState.getFletcher1())
-				frameState.setState(AwaProtocol::HEADER_A);
-			else
-				frameState.setState(AwaProtocol::FLETCHER2);
-			break;
+                case AwaProtocol::FLETCHER1:
+                        // initial frame data integrity check
+                        if (input != frameState.getFletcher1())
+                        {
+                                statistics.increaseInvalid();
+#if defined(STATUS_LED_PIN)
+                                statusLed.error();
+#endif
+                                frameState.setState(AwaProtocol::HEADER_A);
+                        }
+                        else
+                                frameState.setState(AwaProtocol::FLETCHER2);
+                        break;
 
-		case AwaProtocol::FLETCHER2:
-			// initial frame data integrity check
-			if (input != frameState.getFletcher2())
-				frameState.setState(AwaProtocol::HEADER_A);
-			else
-				frameState.setState(AwaProtocol::FLETCHER_EXT);
-			break;
+                case AwaProtocol::FLETCHER2:
+                        // initial frame data integrity check
+                        if (input != frameState.getFletcher2())
+                        {
+                                statistics.increaseInvalid();
+#if defined(STATUS_LED_PIN)
+                                statusLed.error();
+#endif
+                                frameState.setState(AwaProtocol::HEADER_A);
+                        }
+                        else
+                                frameState.setState(AwaProtocol::FLETCHER_EXT);
+                        break;
 
-		case AwaProtocol::FLETCHER_EXT:
-			// final frame data integrity check
-			if (input == frameState.getFletcherExt())
-			{
-				statistics.increaseGood();
+                case AwaProtocol::FLETCHER_EXT:
+                        // final frame data integrity check
+                        if (input == frameState.getFletcherExt())
+                        {
+                                statistics.increaseGood();
+
+                                lastGoodFrameTime = millis();
 
                                 base.renderLeds(true);
 #if defined(STATUS_LED_PIN)
@@ -293,10 +326,17 @@ void processData()
 				updateMainStatistics(currentTime, deltaTime, true);
 
 				yield();
-			}
+                        }
+                        else
+                        {
+                                statistics.increaseInvalid();
+#if defined(STATUS_LED_PIN)
+                                statusLed.error();
+#endif
+                        }
 
-			frameState.setState(AwaProtocol::HEADER_A);
-			break;
+                        frameState.setState(AwaProtocol::HEADER_A);
+                        break;
 		}
 	}
 }

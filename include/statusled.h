@@ -17,6 +17,7 @@ class
         unsigned long blinkUntil = 0;
         unsigned long lastBlink = 0;
         uint8_t blinkState = 0;  // 0: idle, 1: on, 2: off
+        uint8_t blinkCount = 0;
         unsigned long lastBreath = 0;
         int8_t breatheDir = 1;
         uint8_t breatheValue = 0;
@@ -30,15 +31,26 @@ class
                         breatheDir = 1;
                 }
 
+                void startBlink(uint8_t count)
+                {
+                        blinkCount = (count > 0) ? count - 1 : 0;
+                        blinkState = 1;
+                        blinkUntil = millis() + BLINK_TIME;
+                        lastBlink = millis();
+                }
+
+                void error()
+                {
+                        startBlink(3);
+                }
+
                 void update(bool hasActivity)
                 {
                         unsigned long now = millis();
 
-                        if (hasActivity && blinkState == 0 && (now - lastBlink >= BLINK_GAP))
+                        if (hasActivity && blinkState == 0 && blinkCount == 0 && (now - lastBlink >= BLINK_GAP))
                         {
-                                lastBlink = now;
-                                blinkState = 1;
-                                blinkUntil = now + BLINK_TIME;
+                                startBlink(1);
                         }
 
                         if (blinkState == 1)
@@ -54,7 +66,16 @@ class
                         else if (blinkState == 2)
                         {
                                 if (now >= blinkUntil)
-                                        blinkState = 0;
+                                {
+                                        if (blinkCount > 0)
+                                        {
+                                                blinkCount--;
+                                                blinkState = 1;
+                                                blinkUntil = now + BLINK_TIME;
+                                        }
+                                        else
+                                                blinkState = 0;
+                                }
                                 ledcWrite(CHANNEL, 0);
                                 return;
                         }
