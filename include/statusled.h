@@ -28,12 +28,18 @@ class
         bool waiting = true;
 
         public:
-                void init()
+                void init(bool waitHandshake)
                 {
                         ledcSetup(CHANNEL, FREQ, RESOLUTION);
                         ledcAttachPin(STATUS_LED_PIN, CHANNEL);
                         breatheValue = 0;
                         breatheDir = 1;
+                        waiting = waitHandshake;
+                }
+
+                void handshakeComplete()
+                {
+                        waiting = false;
                 }
 
                 void startBlink(uint8_t count)
@@ -59,9 +65,6 @@ class
                 void update(bool hasActivity)
                 {
                         unsigned long now = millis();
-
-                        if (hasActivity)
-                                waiting = false;
 
                         if (waiting)
                         {

@@ -188,12 +188,16 @@ void processData()
                         {
                                 statistics.print(currentTime, base.processDataHandle, base.processSerialHandle);
 
-				if (input == 0x15)
-					SerialPort.println(HELLO_MESSAGE);
-				delay(10);
+                                if (input == 0x15)
+                                        SerialPort.println(HELLO_MESSAGE);
+                                delay(10);
 
-				currentTime = millis();
-				statistics.reset(currentTime);
+#if defined(STATUS_LED_PIN) && defined(WAIT_FOR_HANDSHAKE)
+                                statusLed.handshakeComplete();
+#endif
+
+                                currentTime = millis();
+                                statistics.reset(currentTime);
                                 frameState.setState(AwaProtocol::HEADER_A);
                         }
                         else
