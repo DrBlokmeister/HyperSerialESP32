@@ -122,14 +122,21 @@ class
                                 return;
                         }
 
-                        if (now - lastBreath >= BREATH_STEP)
+                        if (!waiting)
                         {
-                                lastBreath = now;
-                                breatheValue += breatheDir;
-                                if (breatheValue == 0 || breatheValue == 255)
-                                        breatheDir = -breatheDir;
+                                if (now - lastBreath >= BREATH_STEP)
+                                {
+                                        lastBreath = now;
+                                        breatheValue += breatheDir;
+                                        if (breatheValue == 0 || breatheValue == 255)
+                                                breatheDir = -breatheDir;
+                                }
+                                ledcWrite(CHANNEL, breatheValue);
                         }
-                        ledcWrite(CHANNEL, breatheValue);
+                        else
+                        {
+                                ledcWrite(CHANNEL, 0);
+                        }
                 }
 } statusLed;
 
