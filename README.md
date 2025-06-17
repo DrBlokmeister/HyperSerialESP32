@@ -130,6 +130,8 @@ Review the comments at the top of the file:
 * `LED_POWER_PIN` - This is the data pin external power control
 * `LED_POWER_INVERT` - This inverts the output of the exernal power control pin. If set to `false`, the pin state will be low when the relay is turned off. If set to `true`, the pin state will be high when the relay is off. If not defined, default is `false`.
 * `STATUS_LED_PIN` - Optional pin for a status LED indicating serial activity. Example: `-DSTATUS_LED_PIN=15`
+  * After power up the LED shows a waiting pattern (two quick blinks, then off for a second)
+  * During data reception it pulses quickly (brightness rises for ~0.1s) about five times per second
 
 Note: For static color configuration this mechanism will turn off the LEDs. To counter this enable "Continuous Output" in HyperHDR "Smoothing" module. For esp32 and relay control, you may want to disable the "Handshake" option in the Adalight HyperHDR driver to avoid the relay immediately shutting down when resetting the device while initializing the connection.
 
