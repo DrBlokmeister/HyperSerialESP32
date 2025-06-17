@@ -203,10 +203,9 @@ void setup()
 	bool multicore = true;
 
 	// Init serial port
-	Serial.setRxBufferSize(MAX_BUFFER - 1);
-	Serial.setTimeout(50);
+        Serial.setRxBufferSize(MAX_BUFFER - 1);
+        Serial.setTimeout(50);
         Serial.begin(SERIALCOM_SPEED);
-        while (!Serial) continue;
 
 #if defined(STATUS_LED_PIN)
         #ifdef WAIT_FOR_HANDSHAKE
@@ -215,6 +214,15 @@ void setup()
                 statusLed.init(false);
         #endif
 #endif
+
+        unsigned long serialWaitStart = millis();
+        while (!Serial && (millis() - serialWaitStart) < 5000)
+        {
+#if defined(STATUS_LED_PIN)
+                statusLed.update(false);
+#endif
+                yield();
+        }
 
         lastGoodFrameTime = millis();
 

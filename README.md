@@ -130,9 +130,9 @@ You can configure LED power pin in the `platformio.ini` to power off LEDs while 
 Review the comments at the top of the file:
 * `LED_POWER_PIN` - This is the data pin external power control
 * `LED_POWER_INVERT` - This inverts the output of the exernal power control pin. If set to `false`, the pin state will be low when the relay is turned off. If set to `true`, the pin state will be high when the relay is off. If not defined, default is `false`.
-* `STATUS_LED_PIN` - Optional pin for a status LED indicating serial activity. Example: `-DSTATUS_LED_PIN=15`
-  * By default the LED slowly breathes after boot indicating the board is ready and waiting for data
-  * Define `WAIT_FOR_HANDSHAKE` to blink twice every second until the optional handshake frame is received
+* `STATUS_LED_PIN` - Pin for a status LED indicating serial activity. Defaults to `2` on ESP32 boards and `15` on ESP32-S2 boards
+  * After power-up the LED blinks twice per second while waiting for a serial connection
+  * If `WAIT_FOR_HANDSHAKE` is defined (default), it keeps blinking until the handshake frame is received and then switches to a slow breathing pattern
   * During data reception it pulses quickly (brightness rises for ~0.1s) about five times per second
 
 Note: For static color configuration this mechanism will turn off the LEDs. To counter this enable "Continuous Output" in HyperHDR "Smoothing" module. For esp32 and relay control, you may want to disable the "Handshake" option in the Adalight HyperHDR driver to avoid the relay immediately shutting down when resetting the device while initializing the connection.
