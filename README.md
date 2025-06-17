@@ -73,8 +73,9 @@ Configuring HyperHDR v19beta2 or above.
 - set `Baudrate` to 2000000
 - enabled `HyperHDR's AWA protocol`.  
 
-Enabling `White channel calibration` is optional, if you want to fine tune the white channel balance of your sk6812 RGBW LED strip.  
-`ESP8266/ESP32 handshake` could help you to properly initialize the ESP device and enables statistics output to the logs (you must stop the LED device first to get them).  
+Enabling `White channel calibration` is optional, if you want to fine tune the white channel balance of your sk6812 RGBW LED strip.
+`ESP8266/ESP32 handshake` could help you to properly initialize the ESP device and enables statistics output to the logs (you must stop the LED device first to get them).
+Define `WAIT_FOR_HANDSHAKE` if you want the status LED to blink until this handshake is received.
 
 ![obraz](https://user-images.githubusercontent.com/69086569/207109594-0493fe58-3530-46bb-a0a3-31a110475ed6.png)
 
@@ -130,7 +131,8 @@ Review the comments at the top of the file:
 * `LED_POWER_PIN` - This is the data pin external power control
 * `LED_POWER_INVERT` - This inverts the output of the exernal power control pin. If set to `false`, the pin state will be low when the relay is turned off. If set to `true`, the pin state will be high when the relay is off. If not defined, default is `false`.
 * `STATUS_LED_PIN` - Optional pin for a status LED indicating serial activity. Example: `-DSTATUS_LED_PIN=15`
-  * After power up the LED shows a waiting pattern (two quick blinks, then off for a second)
+  * By default the LED slowly breathes after boot indicating the board is ready and waiting for data
+  * Define `WAIT_FOR_HANDSHAKE` to blink twice every second until the optional handshake frame is received
   * During data reception it pulses quickly (brightness rises for ~0.1s) about five times per second
 
 Note: For static color configuration this mechanism will turn off the LEDs. To counter this enable "Continuous Output" in HyperHDR "Smoothing" module. For esp32 and relay control, you may want to disable the "Handshake" option in the Adalight HyperHDR driver to avoid the relay immediately shutting down when resetting the device while initializing the connection.

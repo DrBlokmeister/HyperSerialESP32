@@ -209,7 +209,11 @@ void setup()
         while (!Serial) continue;
 
 #if defined(STATUS_LED_PIN)
-        statusLed.init();
+        #ifdef WAIT_FOR_HANDSHAKE
+                statusLed.init(true);
+        #else
+                statusLed.init(false);
+        #endif
 #endif
 
         lastGoodFrameTime = millis();
